@@ -11,23 +11,16 @@ install_zabbix_agent() {
 
     echo "Detected Distribution: $DISTRO $VERSION"
 
+    # Create the directory to store the .deb package
+    mkdir -p /tmp/zabbix-agent
+
     # Install the corresponding Zabbix repository
     case $DISTRO in
         Debian)
             if [ "$VERSION" == "12" ]; then
                 echo "Installing Zabbix agent for Debian 12"
-                if ! wget https://repo.zabbix.com/zabbix/7.2/release/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.2+debian12_all.deb; then
-                    echo "Error: Failed to download Zabbix release package for Debian 12"
-                    exit 1
-                fi
-                if ! dpkg -i zabbix-release_latest_7.2+debian12_all.deb; then
-                    echo "Error: Failed to install Zabbix release package"
-                    exit 1
-                fi
-                if ! apt update; then
-                    echo "Error: Failed to update apt repository"
-                    exit 1
-                fi
+                PACKAGE_URL="https://repo.zabbix.com/zabbix/7.2/release/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.2+debian12_all.deb"
+                PACKAGE_NAME="zabbix-release_latest_7.2+debian12_all.deb"
             else
                 echo "Unsupported Debian version: $VERSION"
                 exit 1
@@ -37,63 +30,23 @@ install_zabbix_agent() {
             case $VERSION in
                 18.04)
                     echo "Installing Zabbix agent for Ubuntu 18.04"
-                    if ! wget https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu18.04_all.deb; then
-                        echo "Error: Failed to download Zabbix release package for Ubuntu 18.04"
-                        exit 1
-                    fi
-                    if ! dpkg -i zabbix-release_latest_7.2+ubuntu18.04_all.deb; then
-                        echo "Error: Failed to install Zabbix release package"
-                        exit 1
-                    fi
-                    if ! apt update; then
-                        echo "Error: Failed to update apt repository"
-                        exit 1
-                    fi
+                    PACKAGE_URL="https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu18.04_all.deb"
+                    PACKAGE_NAME="zabbix-release_latest_7.2+ubuntu18.04_all.deb"
                     ;;
                 20.04)
                     echo "Installing Zabbix agent for Ubuntu 20.04"
-                    if ! wget https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu20.04_all.deb; then
-                        echo "Error: Failed to download Zabbix release package for Ubuntu 20.04"
-                        exit 1
-                    fi
-                    if ! dpkg -i zabbix-release_latest_7.2+ubuntu20.04_all.deb; then
-                        echo "Error: Failed to install Zabbix release package"
-                        exit 1
-                    fi
-                    if ! apt update; then
-                        echo "Error: Failed to update apt repository"
-                        exit 1
-                    fi
+                    PACKAGE_URL="https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu20.04_all.deb"
+                    PACKAGE_NAME="zabbix-release_latest_7.2+ubuntu20.04_all.deb"
                     ;;
                 22.04)
                     echo "Installing Zabbix agent for Ubuntu 22.04"
-                    if ! wget https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu22.04_all.deb; then
-                        echo "Error: Failed to download Zabbix release package for Ubuntu 22.04"
-                        exit 1
-                    fi
-                    if ! dpkg -i zabbix-release_latest_7.2+ubuntu22.04_all.deb; then
-                        echo "Error: Failed to install Zabbix release package"
-                        exit 1
-                    fi
-                    if ! apt update; then
-                        echo "Error: Failed to update apt repository"
-                        exit 1
-                    fi
+                    PACKAGE_URL="https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu22.04_all.deb"
+                    PACKAGE_NAME="zabbix-release_latest_7.2+ubuntu22.04_all.deb"
                     ;;
                 24.04)
                     echo "Installing Zabbix agent for Ubuntu 24.04"
-                    if ! wget https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu24.04_all.deb; then
-                        echo "Error: Failed to download Zabbix release package for Ubuntu 24.04"
-                        exit 1
-                    fi
-                    if ! dpkg -i zabbix-release_latest_7.2+ubuntu24.04_all.deb; then
-                        echo "Error: Failed to install Zabbix release package"
-                        exit 1
-                    fi
-                    if ! apt update; then
-                        echo "Error: Failed to update apt repository"
-                        exit 1
-                    fi
+                    PACKAGE_URL="https://repo.zabbix.com/zabbix/7.2/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.2+ubuntu24.04_all.deb"
+                    PACKAGE_NAME="zabbix-release_latest_7.2+ubuntu24.04_all.deb"
                     ;;
                 *)
                     echo "Unsupported Ubuntu version: $VERSION"
@@ -106,6 +59,26 @@ install_zabbix_agent() {
             exit 1
             ;;
     esac
+
+    # Download the .deb package into /tmp/zabbix-agent
+    echo "Downloading $PACKAGE_NAME to /tmp/zabbix-agent..."
+    if ! wget -P /tmp/zabbix-agent "$PACKAGE_URL"; then
+        echo "Error: Failed to download Zabbix release package"
+        exit 1
+    fi
+
+    # Install the downloaded package
+    echo "Installing Zabbix release package..."
+    if ! dpkg -i /tmp/zabbix-agent/"$PACKAGE_NAME"; then
+        echo "Error: Failed to install Zabbix release package"
+        exit 1
+    fi
+
+    # Update apt repositories
+    if ! apt update; then
+        echo "Error: Failed to update apt repository"
+        exit 1
+    fi
 
     # Install the Zabbix agent
     if ! apt install -y zabbix-agent; then
