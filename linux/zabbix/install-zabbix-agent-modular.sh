@@ -3,6 +3,12 @@
 # Exit on error
 set -e
 
+# Check if the script is being run as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root. Please run as root and try again."
+    exit 1
+fi
+
 # Function to install Zabbix agent based on distribution
 install_zabbix_agent() {
     # Determine the distribution and version
@@ -106,6 +112,17 @@ install_zabbix_agent() {
     fi
 
     echo "Zabbix agent installation and configuration completed with server: $ZABBIX_SERVER"
+
+    # Ask the user if the system should be rebooted
+    read -p "Do you want to reboot the system now? (y/n): " REBOOT_RESPONSE
+
+    # Handle reboot based on user input
+    if [[ "$REBOOT_RESPONSE" == "y" || "$REBOOT_RESPONSE" == "Y" ]]; then
+        echo "Rebooting the system..."
+        reboot
+    else
+        echo "The system will not be rebooted."
+    fi
 }
 
 # Run the installation function
